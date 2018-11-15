@@ -14,5 +14,7 @@ A set of 10 JQuery components re-written in pure Vanilla JS
 #### Requirements 
 A real browser like firefox chrome or Safari .
 A destination div container with id "slider"
-and Font Awesome CDN
+Font Awesome CDN
 https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css
+
+### Work in progress
