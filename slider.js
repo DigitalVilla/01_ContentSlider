@@ -1,186 +1,70 @@
-let animations, counter, sliderStyles, arrowsStyle, imgStyle, context, lftArrow, rgtArrow;
-var query = window.matchMedia("(max-width : 600px)");
+let animations, index, sliderStyles, arrowsStyle, imgStyle, context, lftArrow, rgtArrow, loopSec, loopId, outDelay, toggle;
+let md = window.matchMedia("(max-width : 700px)"); //screen media query
+let sm = window.matchMedia("(max-width : 450px)"); //screen media query
 const slider = $("#slider");
 let images = [];
-let loopId;
-init();
-
-renderImg(counter);
-myFunction(query);
-loopId = loop();
 
 
-//Event Listeners
-query.addListener(myFunction);
+//START development
 
-
-
-
-addListenerMulti(slider, 'mouseenter click', (e) => {
-    [].slice.call($('[data-class=text]')).forEach((el) => el.remove());
-    renderTxt(counter);
-});
-
-
-rgtArrow.addEventListener('click', function nextImage() {
-    counter = (++counter == images.length) ? 0 : counter;
-    renderImg(counter);
-    clear(counter, 0);
-    resetLoop(loopId);
-});
-
-lftArrow.addEventListener('click', function () {
-    counter = (--counter < 0) ? images.length - 1 : counter;
-    renderImg(counter);
-    // animate($(`.slide${indx}`), "fadeIn");
-    clear(counter, 0);
-    resetLoop(loopId);
-});
-
-function resetLoop(id) {
-    clearInterval(id);
-    loopId = loop();
-}
-
-
-
-
-/// loop on
-function loop() {
-    const id = setInterval(() => {
-        renderImg(counter = (++counter == images.length) ? 0 : counter);
-        clear(counter);
-    }, 4e3);
-    return id;
-}
-
-
-let lftStyle = Object.create(arrowsStyle);
-lftStyle.left = "2%";
-
-let rgtStyle = Object.create(arrowsStyle);
-rgtStyle.right = "2%";
-setStyles(lftArrow, lftStyle);
-setStyles(rgtArrow, rgtStyle);
-setStyles(slider, sliderStyles);
-
-
-
-
-
-
-
-
-
-
-
-function animate(className, animation) {
-    $(className).forEach(() => {
-        anima[animation];
-    });
-}
-
-
-
-
-
-
-const anima = {
-    fadeIn: function (time) {
-        return setInterval((el) => {
-            el.style.opacity = 0;
-        }, time)
-    },
-    fadeOut: function () {},
-    fadeInLeft: function () {},
-    fadeInRight: function () {}
-}
-
-// Utils
-function renderImg(indx = 0) {
-    let img = newElement('img', slider, `slide${indx}`, {
-        src: images[indx].src
-    })
-    setStyles(img, imgStyle);
-}
-
-function renderTxt(indx = 0) {
-    let text = newElement('div', slider, `slide${indx}`);
-    text.setAttribute('data-class', "text");
-    text.style.backgroundColor = `${images[indx].color}`;
-    text.innerHTML = `<h2 style="margin:.6rem 0;">${images[indx].title}</h2>
-    <p>${images[indx].text}</p>`;
-    setStyles(text, context);
-}
-
-function newElement(tag, parent, className, attributes) {
-    let el = document.createElement(tag);
-    el.setAttribute('class', className);
-    if (attributes)
-        for (let a in attributes) {
-            el.setAttribute(a, attributes[a]);
-        }
-    parent.appendChild(el);
-    return parent.lastElementChild;
-}
-
-function setStyles(tag, styles) {
-    for (key in styles) {
-        tag.style[key] = styles[key];
-    }
-}
-
-function clear(pos, delay) {
-    setTimeout(() => {
-        [].slice.call($('[class^="slide"]')).forEach((el, i, arr) => {
-            if (el.className !== `slide${pos}`) {
-                el.remove();
-            }
-        })
-    }, delay);
-}
-
-function myFunction(query) {
-    if (query.matches) { // If media query matches
-        document.body.style.backgroundColor = "#ddd";
-        slider.style.fontSize = "12px";
-    } else {
-        slider.style.fontSize = "16px";
-        document.body.style.backgroundColor = "#aaa";
-    }
-}
-
-//Selector
-function $(param) {
-    let query = document.querySelectorAll(param);
-    return (query.length == 1) ? query[0] : query;
-}
-
-// multi listener
-function addListenerMulti(el, events, fn) {
-    events.split(' ').forEach(e => el.addEventListener(e, fn, false));
-}
+init(); // sets the slider attributes
+renderImg(index); // index is the index of the image. default starts at 0 
+mediaQuery(md); // beta. needs further implementation for responsive design
+loopId = loop(true); // pass "false" to stop the default loop
 
 
 
 function init() {
-    lftArrow = newElement("i", slider, "fas fa-arrow-alt-circle-left fa-3x");
-    rgtArrow = newElement("i", slider, "fas fa-arrow-alt-circle-right fa-3x");
-    counter = 0;
+    // customize 
+    index = 0; //the index of the starting image
+    loopDelay = 4; //the delay for the loop in Seconds
+    outDelay = 800; //the delay for the outSlide in milliseconds
 
-    // Styles 
+    // Change Styles  Here
     sliderStyles = {
-        maxWidth: "800px",
-        minHeight: "300px",
-        height: "400px",
-        width: "90vw",
+        // maxWidth: "800px",
+        width: "80vw",
+        height: "40vw",
         margin: "auto",
         backgroundColor: "#000",
-        borderRadius: "6px",
+        borderRadius: "4px",
         position: "relative",
-        overflow: "hidden"
+        overflow: "hidden",
+        boxShadow: "0 .5rem 2rem #000a",
+        textAlign: "center"
     };
 
+    //Style for the context box
+    context = {
+        width: "100%",
+        fontSize: "1em",
+        height: "20%",
+        position: "absolute",
+        padding: "0 2em",
+        fontFamily: "Verdana, Sans-serif",
+        color: "#eee",
+        zIndex: "100",
+        bottom: "0",
+        transition: "all .5s ease-in-out",
+        animationDuration: ".5s",
+        animationFillMode: "both",
+        animationName: "fadeIn"
+    };
+
+    //image style
+    imgStyle = {
+        position: "absolute",
+        width: "80%",
+        left: "10%",
+        top: "0",
+
+        transition: "all 1.5s ease-in-out",
+        animationDuration: ".8s",
+        animationFillMode: "both",
+        animationName: "fadeIn"
+    };
+
+    // arrowsStyle
     arrowsStyle = {
         position: "absolute",
         top: "45%",
@@ -189,32 +73,14 @@ function init() {
         zIndex: "100",
         cursor: "pointer"
     };
-    imgStyle = {
-        position: "absolute",
-        width: "100%",
-        transition: "all 1.5s ease-in",
-        // top: "50%",
-        // lef: "50%",
-        // transform: "translateY(-50%)"
-    };
-    //Styles
-    context = {
-        width: "100%",
-        height: "30%",
-        position: "absolute",
-        opacity: 0.7,
-        padding: "0 2rem",
-        fontFamily: "Verdana, Sans-serif",
-        color: "#eee",
-        zIndex: "100",
-        bottom: "0"
-    };
+
+
 
     images = [{
             title: "Parrot",
             text: "Lorem ipsum Parrot eti dei elium",
             src: "/img/parrot-min.jpg",
-            color: "#880"
+            color: "#880" //optional
         },
         {
             title: "Frog",
@@ -253,10 +119,187 @@ function init() {
             color: "#954"
         }
     ]
+
+    lftArrow = newElement("i", slider, "fas fa-arrow-alt-circle-left fa-3x");
+    rgtArrow = newElement("i", slider, "fas fa-arrow-alt-circle-right fa-3x");
+    toggle = true; //avoid double clicking on arrows
 }
 
 
-// TISP
+//Event Listeners
+md.addListener(mediaQuery);
+sm.addListener(mediaQuery);
+
+
+//delete duplicate box context when the arrow is clicked 
+addListenerMulti(slider, 'mouseenter click', (e) => {
+    [].slice.call($('[data-class=text]')).forEach((el) => el.remove());
+    renderTxt(index);
+});
+
+
+// right arrow function
+rgtArrow.addEventListener('click', function nextImage() {
+    if (toggle) {
+        slideImage(true);
+        resetLoop(loopId);
+    }
+});
+
+
+//left Arrow function
+lftArrow.addEventListener('click', function () {
+    if (toggle) {
+        slideImage(false);
+        resetLoop(loopId);
+    }
+});
+
+//starts index from zero
+function resetLoop(id) {
+    clearInterval(id);
+    loopId = loop(true);
+}
+
+/// loop on
+function loop(loop) {
+    if (!loop) return;
+    const id = setInterval(() => {
+        slideImage(true);
+    }, loopDelay * 1000);
+    return id;
+}
+
+function slideImage(right) {
+    let slideOut = (right) ? "fadeOutLeft" : "fadeOutRight";
+    animate(slideOut, index); //previous
+
+    index = (right) ? (++index == images.length) ? 0 : index :
+        (--index < 0) ? images.length - 1 : index;
+
+    renderImg(index);
+    let slideIn = (right) ? "fadeInRight" : "fadeInLeft";
+    animate(slideIn, index);
+    clear(index, outDelay);
+}
+
+
+//add the default style for arrow and add left position
+let lftStyle = Object.create(arrowsStyle);
+lftStyle.left = "2%";
+
+//add the default style for arrow and add right position
+let rgtStyle = Object.create(arrowsStyle);
+rgtStyle.right = "2%";
+
+// add all styles to Node elements
+setStyles(lftArrow, lftStyle);
+setStyles(rgtArrow, rgtStyle);
+setStyles(slider, sliderStyles);
+
+// still in development to add transitions and fade ins/outs
+function animate(animation, index) {
+    try {
+
+        let node = $("img.slide" + index);
+        node.style.animationName = animation;
+
+
+    } catch (TypeError) {
+        console.log("Dont! you are going to break it");
+        toggle = false
+        setTimeout(() => {
+            toggle = true;
+        }, 2000);
+    }
+
+}
+
+// Utils
+function renderImg(indx = 0) {
+    let img = newElement('img', slider, `slide${indx}`, {
+        src: images[indx].src
+    })
+    setStyles(img, imgStyle);
+}
+
+function renderTxt(indx = 0) {
+    let text = newElement('div', slider, `slide${indx}`);
+    text.setAttribute('data-class', "text");
+    text.style.backgroundColor = `${images[indx].color || "#777"}`;
+    text.innerHTML = `<h2 style="margin:.6rem 0;">${images[indx].title}</h2>
+    <p>${images[indx].text}</p>`;
+    setStyles(text, context);
+}
+
+function newElement(tag, parent, className, attributes) {
+    let el = document.createElement(tag);
+    el.setAttribute('class', className);
+    if (attributes)
+        for (let a in attributes) {
+            el.setAttribute(a, attributes[a]);
+        }
+    parent.appendChild(el);
+    return parent.lastElementChild;
+}
+
+//add all the styles in the style constructor 
+function setStyles(tag, styles) {
+    for (key in styles) {
+        tag.style[key] = styles[key];
+    }
+}
+
+// delete the previous slide 
+function clear(pos, delay) {
+
+    setTimeout(() => {
+        [].slice.call($('[class^="slide"]')).forEach((el, i, arr) => {
+
+            if (el.className !== `slide${pos}`) {
+                el.remove();
+            }
+        })
+    }, delay);
+}
+
+// in beta
+function mediaQuery(query) {
+    if (query.media === "(max-width: 700px)" && query.matches) {
+        // document.body.style.backgroundColor = "#aaa";
+        // slider.style.height = "30vh";
+
+        slider.style.fontSize = "12px";
+        slider.style.width = "95vw";
+        slider.style.height = "50vw";
+    } else if (query.media == "(max-width: 450px)" && query.matches) {
+        slider.style.width = "100vw";
+        // document.body.style.backgroundColor = "#afa";
+        slider.style.fontSize = "10px";
+    } else { //default
+        // slider.style.height = "height:400px";
+        slider.style.width = "80vw";
+        slider.style.height = "40vw";
+        slider.style.fontSize = "16px";
+        document.body.style.backgroundColor = "#ddd";
+    }
+}
+
+//Selector
+function $(param) {
+    let query = document.querySelectorAll(param);
+    return (query.length == 1) ? query[0] : query;
+}
+
+//Custom multi listener to add multiple events that require the same functionality
+function addListenerMulti(el, events, fn) {
+    events.split(' ').forEach(e => el.addEventListener(e, fn, false));
+}
+
+
+
+
+
 // [id^='someId'] will match all ids starting with someId.
 // [id$='someId'] will match all ids ending with someId.
 // [id*='someId'] will match all ids containing someId.
